@@ -1,2 +1,2 @@
 ## Demo
-Spring boot + Redis + JWT 
+Spring boot + swagger2 +Redis + JWT 
