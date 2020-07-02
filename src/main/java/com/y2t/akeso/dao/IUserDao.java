@@ -1,7 +1,7 @@
 package com.y2t.akeso.dao;
 
 import com.y2t.akeso.common.sql.SimpleInsertLangDriver;
-import com.y2t.akeso.pojo.User;
+import com.y2t.akeso.pojo.po.UserPO;
 import org.apache.ibatis.annotations.*;
 
 /**
@@ -20,7 +20,7 @@ public interface IUserDao {
      */
     @Insert("INSERT INTO user (#{userPO})")
     @Lang(SimpleInsertLangDriver.class)
-    int addUser(User userPO);
+    int addUser(UserPO userPO);
 
     /**
      * 根据手机号码查询短信
@@ -36,6 +36,6 @@ public interface IUserDao {
             @Result(property="createTime",column="create_time"),
             @Result(property="updateTime",column="update_time"),
     })
-    User selectByPhone(@Param("phone") String telephone);
+    UserPO selectByPhone(@Param("phone") String telephone);
 
 }

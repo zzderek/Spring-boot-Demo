@@ -2,8 +2,11 @@ package com.y2t.akeso.service.impl;
 
 import com.y2t.akeso.common.api.CommonResult;
 import com.y2t.akeso.common.api.ResultCode;
+import com.y2t.akeso.dao.IUserDao;
 import com.y2t.akeso.pojo.Message;
+import com.y2t.akeso.pojo.po.UserPO;
 import com.y2t.akeso.service.IUserService;
+import com.y2t.akeso.utils.IDUtils;
 import com.y2t.akeso.utils.JwtTokenUtils;
 import com.y2t.akeso.utils.RedisUtils;
 import org.slf4j.Logger;
@@ -39,10 +42,14 @@ public class UserServiceImpl implements IUserService {
 
     @Autowired
     private RedisUtils redisUtils;
+    @Autowired
+    private LotteryServiceImpl lotteryService;
+    @Autowired
+    private IUserDao userDao;
 
     @Override
     public CommonResult generateAuthCode(String telephone) {
-        //TODO 生成验证码
+        // 生成验证码
         String  authCode = "1111";
         //发送短信
 
@@ -84,7 +91,7 @@ public class UserServiceImpl implements IUserService {
         //把Token存入redis或更新时间
         String cacheToken = (String) redisUtils.get(phone);
         if (!StringUtils.isEmpty(cacheToken)){
-            //TODO 更新缓存时间还是重新生成Token
+            // 更新缓存时间还是重新生成Token
         }
         try {
             Message message = messageService.getMessageByPhone(phone);
@@ -118,19 +125,54 @@ public class UserServiceImpl implements IUserService {
 
         result = CommonResult.success(tokenMap);
 
+        String userid = IDUtils.getID();
+        UserPO user = UserPO.builder().username(userid).userId(userid).phone(phone)
+                .status("1").createTime(LocalDateTime.now()).updateTime(LocalDateTime.now()).build();
+        if( userDao.addUser(user)>0){
+            logger.info("新增用户成功");
+        }else{
+            logger.info("新增用户失败");
+        }
+
         if(redisUtils.set(phone,token,Long.valueOf(expiration))){
             logger.info("Token缓存成功！");
         }else {
             logger.info("Token缓存失败！");
             return CommonResult.failed(ResultCode.FAILED);
         }
+
         return  result;
+    }
+
+    /**
+     * 用户抢红包
+     * @param userId
+     * @return
+     */
+    @Override
+    public CommonResult getLottery(String userId, int amount) {
+
+        Boolean isAmple = lotteryService.isAmple(amount);
+        if(!isAmple){
+            //红包数量不足
+            return CommonResult.failed("红包数量不足！");
+        }
+
+        //开启事务
+        //用户增加红包
+        //奖池减少红包
+        lotteryService.userLotteryTransaction(userId, amount);
+
+
+        return CommonResult.success("成功");
     }
 
     @Override
     public String refreshToken(String token) {
         return jwtTokenUtils.refreshToken(token);
     }
+
+
 
 
 }

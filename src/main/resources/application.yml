@@ -5,9 +5,9 @@ spring:
   profiles:
     active: dev
   application:
-    name: quic-user
+    name: demo
   datasource:
-    url: jdbc:mysql://localhost:3306/akeso?allowMultiQueries=true&autoReconnect=true&useSSL=false
+    url: jdbc:mysql://localhost:3306/demo?allowMultiQueries=true&autoReconnect=true&useSSL=false
     username: root
     password: password
     driver-class-name: com.mysql.jdbc.Driver
@@ -21,6 +21,6 @@ spring:
 
 
 jwt:
-  tokenHeader: Authorization #JWT´æ´¢µÄÇëÇóÍ·
-  expiration: 1800 #JWTµÄ³¬ÆÚÏÞÊ±¼ä30·ÖÖÓ(60*30)
-  tokenHead: Bearer #JWT¸ºÔØÖÐÄÃµ½¿ªÍ·
+  tokenHeader: Authorization #JWTï¿½æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í·
+  expiration: 1800 #JWTï¿½Ä³ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½30ï¿½ï¿½ï¿½ï¿½(60*30)
+  tokenHead: Bearer #JWTï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½Í·

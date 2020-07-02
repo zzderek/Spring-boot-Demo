@@ -31,4 +31,11 @@ public interface IUserService {
      * @return 刷新后的Token
      */
     String refreshToken(String token);
+
+    /**
+     * 用户抢红包
+     * @param userId
+     * @return
+     */
+    CommonResult getLottery(String userId,int amount);
 }
