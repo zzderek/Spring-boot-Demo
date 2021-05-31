@@ -5,6 +5,7 @@ import cn.hutool.core.util.IdUtil;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.y2t.akeso.common.api.CommonResult;
+import com.y2t.akeso.common.api.Contants;
 import com.y2t.akeso.dao.IUserDao;
 import com.y2t.akeso.entity.User;
 import com.y2t.akeso.model.LoginResponse;
@@ -29,11 +30,8 @@ public class UserServiceImpl implements IUserService {
     //验证码过期时间，单位：秒
     public  static  final  int CODE_EXPIRE_SECOND = 300;
     private static final String CLAIM_KEY_USERID = "USERID";
-    private static final String CLAIM_KEY_CREATTIME = "CREATTIME";
-    /**
-     * 签名密钥
-     */
-    private static final String SECRET = "demo-secret";
+
+
 
     @Autowired
     private JwtTokenUtils jwtTokenUtils;
@@ -108,7 +106,7 @@ public class UserServiceImpl implements IUserService {
     private String cacheToken(String userId) {
         String token = generateToken(userId);
 
-        if(redisUtils.set(userId,token,300)){
+        if(redisUtils.set(userId,token,0)){
             logger.info("Token缓存成功！");
         }else {
             logger.info("Token缓存失败！");
@@ -120,8 +118,7 @@ public class UserServiceImpl implements IUserService {
         DateTime nowDate = new DateTime();
         String token = JWT.create()
                 .withClaim(CLAIM_KEY_USERID, userId)
-                .withIssuedAt(nowDate)
-                .sign(Algorithm.HMAC256(SECRET));
+                .sign(Algorithm.HMAC256(Contants.JWT_SECRET));
 
         return token;
     }
@@ -146,12 +143,13 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public String refreshToken(String token) {
-        return jwtTokenUtils.refreshToken(token);
+        //return jwtTokenUtils.refreshToken(token);
+        return "";
     }
 
     @Override
     public void reNewToken(String userId,String token) {
-        if(redisUtils.set(userId,token,300)){
+        if(redisUtils.set(userId,token,0)){
             logger.info("Token缓存成功！");
         }else {
             logger.info("Token缓存失败！");

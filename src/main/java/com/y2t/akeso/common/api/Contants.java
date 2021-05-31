@@ -9,4 +9,9 @@ public class Contants {
 
     public  static final  int HASHMAP_DEFAULT_SIZE = 16;
 
+    /**
+     * 签名密钥
+     */
+    public static final String JWT_SECRET = "demo-secret";
+
 }

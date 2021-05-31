@@ -6,6 +6,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.y2t.akeso.annotation.PassToken;
+import com.y2t.akeso.common.api.Contants;
 import com.y2t.akeso.entity.User;
 import com.y2t.akeso.exception.TokenValidateException;
 import com.y2t.akeso.service.impl.UserServiceImpl;
@@ -75,7 +76,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
             throw new TokenValidateException("Token错误");
         }
         // 验证 token
-        JWTVerifier verifier = JWT.require(Algorithm.HMAC256(SECRET)).build();
+        JWTVerifier verifier = JWT.require(Algorithm.HMAC256(Contants.JWT_SECRET)).build();
         try {
             verifier.verify(token);
         } catch (JWTVerificationException e) {
