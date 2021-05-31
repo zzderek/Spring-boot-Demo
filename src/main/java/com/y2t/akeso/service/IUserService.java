@@ -2,6 +2,7 @@ package com.y2t.akeso.service;
 
 
 import com.y2t.akeso.common.api.CommonResult;
+import com.y2t.akeso.entity.User;
 
 /**
  * @author ZiTung
@@ -24,11 +25,31 @@ public interface IUserService {
      */
     CommonResult login(String phone, String validCode);
 
+    /**
+     *  根据手机号码查询是否存在用户
+     * @param phoneNumber 手机号码
+     * @return 封装好的返回对象
+     */
+    User getByPhoneNumber(String phoneNumber);
 
+    /**
+     *  根据userId查询是否存在用户
+     * @param userId 手机号码
+     * @return 封装好的返回对象
+     */
+    User getByUserId(String userId);
     /**
      * 刷新Token
      * @param token
      * @return 刷新后的Token
      */
     String refreshToken(String token);
+
+    /**
+     *
+     * 续期token
+     * @param userId
+     * @param token
+     */
+    void reNewToken(String userId,String token);
 }

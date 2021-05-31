@@ -1,23 +1,22 @@
 package com.y2t.akeso.service.impl;
 
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.util.IdUtil;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.y2t.akeso.common.api.CommonResult;
-import com.y2t.akeso.common.api.ResultCode;
-import com.y2t.akeso.pojo.Message;
+import com.y2t.akeso.dao.IUserDao;
+import com.y2t.akeso.entity.User;
+import com.y2t.akeso.model.LoginResponse;
 import com.y2t.akeso.service.IUserService;
+import com.y2t.akeso.utils.IDUtils;
 import com.y2t.akeso.utils.JwtTokenUtils;
 import com.y2t.akeso.utils.RedisUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-
-import static com.y2t.akeso.common.api.Contants.HASHMAP_DEFAULT_SIZE;
 
 
 /**
@@ -27,45 +26,35 @@ import static com.y2t.akeso.common.api.Contants.HASHMAP_DEFAULT_SIZE;
 public class UserServiceImpl implements IUserService {
 
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+    //验证码过期时间，单位：秒
+    public  static  final  int CODE_EXPIRE_SECOND = 300;
+    private static final String CLAIM_KEY_USERID = "USERID";
+    private static final String CLAIM_KEY_CREATTIME = "CREATTIME";
+    /**
+     * 签名密钥
+     */
+    private static final String SECRET = "demo-secret";
 
-    @Value("${jwt.tokenHead}")
-    private String tokenHead;
-    @Value("${jwt.expiration}")
-    private String expiration;
     @Autowired
     private JwtTokenUtils jwtTokenUtils;
     @Autowired
-    private MessageServiceImpl messageService;
-
-    @Autowired
     private RedisUtils redisUtils;
+    @Autowired
+    private IUserDao userDao;
 
     @Override
     public CommonResult generateAuthCode(String telephone) {
-        //TODO 生成验证码
-        String  authCode = "1111";
+        // 验证码长度
+        String authCode = IDUtils.getValidCode(4);
+        logger.info("生成的短信验证码：{}", authCode);
+        //缓存验证码，过期时间，单位：秒 。 5分钟
+        boolean result = redisUtils.set(telephone, authCode, CODE_EXPIRE_SECOND);
         //发送短信
+        logger.info("---短信发送中---");
+        logger.info("---短信发送成功---");
 
-        //新增一条记录，表示注册成功
-        Message newMessage = new Message();
-        newMessage = new Message();
-        newMessage.setPhone(telephone);
-        newMessage.setValidCode(authCode);
-        LocalDateTime nowTime = LocalDateTime.now();
-        LocalDateTime expiredTime = nowTime.plusMinutes(5);
-        newMessage.setSendTime(nowTime );
-        newMessage.setExpiredTime(expiredTime);
-        //根据手机查询短信发送记录
-        Message message = messageService.getMessageByPhone(telephone);
-        if (null != message ) {
-           messageService.updateMessage(newMessage);
-        }else {
-            messageService.addMessage(newMessage);
-        }
-        Map<String, String> msgMap = new HashMap<>(HASHMAP_DEFAULT_SIZE);
-        msgMap.put("validCode", authCode);
-        return CommonResult.success(msgMap,"短信发送成功");
-
+        //返回验证码
+        return CommonResult.success("短信发送成功");
 
     }
 
@@ -81,50 +70,78 @@ public class UserServiceImpl implements IUserService {
     public CommonResult login( String phone, String authcode) {
         CommonResult result = null;
         String token = null;
-        //把Token存入redis或更新时间
-        String cacheToken = (String) redisUtils.get(phone);
-        if (!StringUtils.isEmpty(cacheToken)){
-            //TODO 更新缓存时间还是重新生成Token
+        // 验证码检验
+        String redisVCode = (String) redisUtils.get(phone);
+        if (StringUtils.isEmpty(redisVCode)) {
+            logger.info("请获取验证码");
+            return CommonResult.failed( "请获取验证码");
         }
-        try {
-            Message message = messageService.getMessageByPhone(phone);
-            if (null == message) {
-                return CommonResult.failed(ResultCode.USER_GET_VCODE_FIRST);
-            }else {
-                //验证验证码是否有效
-                if (!message.getValidCode().equals(authcode)){
-                    logger.info( "验证码错误！");
-                    return CommonResult.failed(ResultCode.USER_ERROR_VCODE);
-                }
-                if(LocalDateTime.now().isAfter(message.getExpiredTime())){
-                    logger.info( "验证码已过期！");
-                    return CommonResult.failed(ResultCode.USER_EXPIRED_VCODE);
-                }
-
-            }
-            token = jwtTokenUtils.generateToken(phone);
-        } catch (Exception e) {
-            e.printStackTrace();
-            logger.warn("登录异常:{}", e.getMessage());
-            return CommonResult.failed(ResultCode.USER_LOGIN_FAILED);
+        if (!redisVCode.equals(authcode)) {
+            logger.info("验证码错误");
+            return CommonResult.failed( "验证码错误");
         }
 
-        Map<String, Object> tokenMap = new HashMap<>(HASHMAP_DEFAULT_SIZE);
-        //返回信息组装
-        tokenMap.put("token", token);
-        tokenMap.put("tokenHead", tokenHead);
-        tokenMap.put("authState", 1);
-        tokenMap.put("deposit", "20");
+        LoginResponse response = createResponse(phone);
 
-        result = CommonResult.success(tokenMap);
 
-        if(redisUtils.set(phone,token,Long.valueOf(expiration))){
+        return  CommonResult.success(response);
+    }
+
+    @Override
+    public User getByPhoneNumber(String phoneNumber) {
+        return userDao.selectByPhone(phoneNumber) ;
+    }
+
+    @Override
+    public User getByUserId(String userId) {
+        return userDao.selectByUserId(userId);
+    }
+
+    private LoginResponse createResponse(String phone) {
+        String userId = IdUtil.objectId();
+        User user =  queryOrSave(userId,phone);
+        String token = cacheToken(user.getUserId());
+        LoginResponse response = new LoginResponse(user,token);
+        return response;
+    }
+
+    private String cacheToken(String userId) {
+        String token = generateToken(userId);
+
+        if(redisUtils.set(userId,token,300)){
             logger.info("Token缓存成功！");
         }else {
             logger.info("Token缓存失败！");
-            return CommonResult.failed(ResultCode.FAILED);
         }
-        return  result;
+        return token;
+    }
+    public String generateToken(String userId) {
+
+        DateTime nowDate = new DateTime();
+        String token = JWT.create()
+                .withClaim(CLAIM_KEY_USERID, userId)
+                .withIssuedAt(nowDate)
+                .sign(Algorithm.HMAC256(SECRET));
+
+        return token;
+    }
+
+
+    private User queryOrSave(String userId, String phone) {
+        // 根据手机号码查询是否在本系统登录过
+        User user = getByPhoneNumber(phone);
+        // 第一次登陆，则新增一个用户信息
+        if (user == null) {
+            // 新增一个用户信息
+            User newUser = new User(userId,userId,phone, "1");
+            int result = userDao.addUser(newUser);
+            if (result > 0) {
+                logger.info("用户{}--{}新增成功",userId,userId);
+            }
+        }
+        // 查询并返回
+        User queryUser = getByPhoneNumber(phone);
+        return queryUser;
     }
 
     @Override
@@ -132,5 +149,14 @@ public class UserServiceImpl implements IUserService {
         return jwtTokenUtils.refreshToken(token);
     }
 
+    @Override
+    public void reNewToken(String userId,String token) {
+        if(redisUtils.set(userId,token,300)){
+            logger.info("Token缓存成功！");
+        }else {
+            logger.info("Token缓存失败！");
+        }
+        return;
+    }
 
 }

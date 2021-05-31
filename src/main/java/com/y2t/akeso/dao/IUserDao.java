@@ -1,7 +1,6 @@
 package com.y2t.akeso.dao;
 
-import com.y2t.akeso.common.sql.SimpleInsertLangDriver;
-import com.y2t.akeso.pojo.User;
+import com.y2t.akeso.entity.User;
 import org.apache.ibatis.annotations.*;
 
 /**
@@ -18,8 +17,8 @@ public interface IUserDao {
      * @param userPO
      * @return
      */
-    @Insert("INSERT INTO user (#{userPO})")
-    @Lang(SimpleInsertLangDriver.class)
+    @Insert("INSERT INTO user (user_name,user_id,phone,status) " +
+            "values (#{userName},#{userId},#{phone},#{status})")
     int addUser(User userPO);
 
     /**
@@ -38,4 +37,15 @@ public interface IUserDao {
     })
     User selectByPhone(@Param("phone") String telephone);
 
+
+    @Select("select * from user where user_id = #{userId}")
+    @Results({
+            @Result(property="userId",column="user_id"),
+            @Result(property="username",column="username"),
+            @Result(property="phone",column="phone"),
+            @Result(property="status",column="status"),
+            @Result(property="createTime",column="create_time"),
+            @Result(property="updateTime",column="update_time"),
+    })
+    User selectByUserId(String userId);
 }

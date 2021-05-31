@@ -4,23 +4,3 @@ server:
 spring:
   profiles:
     active: dev
-  application:
-    name: quic-user
-  datasource:
-    url: jdbc:mysql://localhost:3306/akeso?allowMultiQueries=true&autoReconnect=true&useSSL=false
-    username: root
-    password: password
-    driver-class-name: com.mysql.jdbc.Driver
-
-  redis:
-    database: 0
-    host: localhost
-    port: 6379
-    password:
-    timeout: 2000ms
-
-
-jwt:
-  tokenHeader: Authorization #JWT存储的请求头
-  expiration: 1800 #JWT的超期限时间30分钟(60*30)
-  tokenHead: Bearer #JWT负载中拿到开头

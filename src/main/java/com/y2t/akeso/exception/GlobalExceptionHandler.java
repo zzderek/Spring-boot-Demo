@@ -7,6 +7,7 @@ import com.y2t.akeso.common.api.ResultCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+import javax.validation.ConstraintViolationException;
 import java.util.List;
 
 /**
@@ -35,6 +37,17 @@ public class GlobalExceptionHandler {
         logger.error("空指针异常"+e.getMessage());
         return CommonResult.failed(ResultCode.FAILED);
     }
+    /**
+     * Token校验异常
+     */
+    @ExceptionHandler(TokenValidateException.class)
+    @ResponseBody
+    public CommonResult TokenValidateException(TokenValidateException ex){
+        String errorMsg = ex.getMessage();
+        ex.printStackTrace();
+        logger.error("Token校验异常："+errorMsg);
+        return  CommonResult.failed(errorMsg);
+    }
 
     @ExceptionHandler(value= JSONException.class)
     @ResponseBody
@@ -44,6 +57,34 @@ public class GlobalExceptionHandler {
         return CommonResult.failed(ResultCode.FAILED);
     }
 
+
+    /**
+     * 用来处理bean validation异常
+     */
+    @ExceptionHandler(BindException.class)
+    @ResponseBody
+    public  CommonResult BindException(BindException  ex){
+        ex.printStackTrace();
+        String errorMsg = ex.getMessage();
+        logger.error("参数检验错误-BindException："+errorMsg);
+        return  CommonResult.failed( errorMsg);
+    }
+
+    /**
+     * bean参数校验
+     * @param ex
+     * @return
+     */
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler({ConstraintViolationException.class})
+    @ResponseBody
+    public CommonResult handleConstraintViolationException(ConstraintViolationException ex) {
+        ex.printStackTrace();
+        String errorMsg = ex.getMessage();
+        logger.error("参数检验错误-ConstraintViolationException："+errorMsg);
+        return CommonResult.failed(errorMsg);
+    }
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(value= Exception.class)
     @ResponseBody
     public CommonResult  exceptionHandler(Exception e){
