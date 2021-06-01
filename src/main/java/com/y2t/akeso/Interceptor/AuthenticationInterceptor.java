@@ -27,7 +27,6 @@ import java.lang.reflect.Method;
  */
 public class AuthenticationInterceptor implements HandlerInterceptor {
     public static final String AUTH_HEADER_KEY = "Authorization";
-    private static final String SECRET = "odt-secret";
     private static final String CLAIM_KEY_USERID = "USERID";
     @Autowired
     private UserServiceImpl userService;
