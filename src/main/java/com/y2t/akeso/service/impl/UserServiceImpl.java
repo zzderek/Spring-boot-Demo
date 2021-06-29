@@ -4,7 +4,7 @@ import cn.hutool.core.date.DateTime;
 import cn.hutool.core.util.IdUtil;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.y2t.akeso.common.api.CommonResult;
+import com.y2t.akeso.common.CommonException;
 import com.y2t.akeso.common.api.Contants;
 import com.y2t.akeso.dao.IUserDao;
 import com.y2t.akeso.entity.User;
@@ -41,7 +41,7 @@ public class UserServiceImpl implements IUserService {
     private IUserDao userDao;
 
     @Override
-    public CommonResult generateAuthCode(String telephone) {
+    public void generateAuthCode(String telephone) {
         // 验证码长度
         String authCode = IDUtils.getValidCode(4);
         logger.info("生成的短信验证码：{}", authCode);
@@ -50,9 +50,6 @@ public class UserServiceImpl implements IUserService {
         //发送短信
         logger.info("---短信发送中---");
         logger.info("---短信发送成功---");
-
-        //返回验证码
-        return CommonResult.success("短信发送成功");
 
     }
 
@@ -65,24 +62,23 @@ public class UserServiceImpl implements IUserService {
      * @return
      */
     @Override
-    public CommonResult login( String phone, String authcode) {
-        CommonResult result = null;
-        String token = null;
+    public LoginResponse login( String phone, String authcode) throws CommonException {
+
         // 验证码检验
         String redisVCode = (String) redisUtils.get(phone);
         if (StringUtils.isEmpty(redisVCode)) {
             logger.info("请获取验证码");
-            return CommonResult.failed( "请获取验证码");
+            throw new CommonException("请获取验证码");
+         //   return CommonResult.failed( "请获取验证码");
         }
         if (!redisVCode.equals(authcode)) {
             logger.info("验证码错误");
-            return CommonResult.failed( "验证码错误");
+            throw new CommonException("验证码错误");
+         //   return CommonResult.failed( "验证码错误");
         }
 
         LoginResponse response = createResponse(phone);
-
-
-        return  CommonResult.success(response);
+        return  response;
     }
 
     @Override

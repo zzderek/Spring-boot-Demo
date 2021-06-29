@@ -8,8 +8,8 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.y2t.akeso.annotation.PassToken;
-import com.y2t.akeso.common.api.CommonResult;
 import com.y2t.akeso.common.api.Contants;
+import com.y2t.akeso.common.result.GlobalResult;
 import com.y2t.akeso.entity.User;
 import com.y2t.akeso.exception.TokenValidateException;
 import com.y2t.akeso.service.impl.UserServiceImpl;
@@ -200,7 +200,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        CommonResult result = CommonResult.failed(message);
+        GlobalResult result = GlobalResult.fail(message);
         response.getWriter().write(JSONUtil.toJsonStr(result));
         response.getWriter().flush();
     }

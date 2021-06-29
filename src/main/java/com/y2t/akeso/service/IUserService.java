@@ -1,8 +1,9 @@
 package com.y2t.akeso.service;
 
 
-import com.y2t.akeso.common.api.CommonResult;
+import com.y2t.akeso.common.CommonException;
 import com.y2t.akeso.entity.User;
+import com.y2t.akeso.model.LoginResponse;
 
 /**
  * @author ZiTung
@@ -13,9 +14,9 @@ public interface IUserService {
     /**
      *  发送验证码
      * @param telephone 手机号码
-     * @return 封装好的返回对象
+     * @return
      */
-    CommonResult generateAuthCode(String telephone);
+    void generateAuthCode(String telephone);
 
     /**
      *  登陆，登陆成功返回Token
@@ -23,7 +24,7 @@ public interface IUserService {
      * @param validCode  验证码
      * @return 封装好的返回对象
      */
-    CommonResult login(String phone, String validCode);
+    LoginResponse login(String phone, String validCode) throws CommonException;
 
     /**
      *  根据手机号码查询是否存在用户

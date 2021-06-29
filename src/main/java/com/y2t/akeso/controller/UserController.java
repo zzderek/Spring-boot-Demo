@@ -1,9 +1,12 @@
 package com.y2t.akeso.controller;
 
+import cn.hutool.json.JSONObject;
 import com.y2t.akeso.annotation.PassToken;
-import com.y2t.akeso.common.api.CommonResult;
+import com.y2t.akeso.common.CommonException;
+import com.y2t.akeso.common.result.GlobalResult;
 import com.y2t.akeso.cqe.LoginCommand;
 import com.y2t.akeso.cqe.SendMessageCommand;
+import com.y2t.akeso.model.LoginResponse;
 import com.y2t.akeso.service.IUserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -30,8 +33,9 @@ public class UserController {
     @PassToken
     @ApiOperation(value="发送验证码", notes="根据手机号下发验证码")
     @PostMapping("/sendMessage")
-    public CommonResult sendMessage(@RequestBody @Valid SendMessageCommand sendMessageCommand) {
-        return userService.generateAuthCode(sendMessageCommand.getPhoneNumber());
+    public GlobalResult sendMessage(@RequestBody @Valid SendMessageCommand sendMessageCommand) {
+        userService.generateAuthCode(sendMessageCommand.getPhoneNumber());
+        return  GlobalResult.ok("短信发送成功");
     }
 
 
@@ -39,13 +43,14 @@ public class UserController {
     @ApiOperation(value="验证码登陆", notes="根据验证码登陆")
     @PostMapping("/login")
     @PassToken
-    public CommonResult login(@RequestBody @Valid LoginCommand command) {
-        return userService.login(command.getPhoneNumber(),command.getVcode());
+    public GlobalResult<LoginResponse> login(@RequestBody @Valid LoginCommand command) throws CommonException {
+        LoginResponse response =  userService.login(command.getPhoneNumber(),command.getVcode());
+        return GlobalResult.ok().setResult(response==null?new JSONObject():response);
     }
 
     @ApiOperation(value="测试Token", notes="测试Token")
     @GetMapping("/test")
-    public CommonResult tokenTest() {
-        return CommonResult.success("Token测试通过");
+    public GlobalResult tokenTest() {
+        return GlobalResult.ok("Token测试通过");
     }
 }
