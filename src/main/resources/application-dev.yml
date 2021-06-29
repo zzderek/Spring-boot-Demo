@@ -19,6 +19,9 @@ spring:
     password:
     timeout: 2000ms
 
+logging:
+  level:
+    com.y2t.akeso.dao: debug
 
 jwt:
   tokenHeader: Authorization #JWT�洢������ͷ
