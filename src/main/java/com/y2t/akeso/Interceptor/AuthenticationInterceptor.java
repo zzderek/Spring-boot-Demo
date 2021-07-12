@@ -55,6 +55,8 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
      */
     @Override
     public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object object) throws Exception {
+        String uuid = UUID.randomUUID().toString();
+        MDC.put(REQUEST_ID, uuid);
         logger.info("----进入默认拦截器----");
 
         //获取请求参数
@@ -75,8 +77,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
         sb.append("URL       : ").append(httpServletRequest.getRequestURL()).append("\n");
       //  logger.info("-------------------------------------------------------------\n");
         Long start = System.currentTimeMillis();
-        String uuid = UUID.randomUUID().toString();
-        MDC.put(REQUEST_ID, uuid);
+
         httpServletRequest.setAttribute(START_TIME, start);
         logger.info(sb.toString());
 
